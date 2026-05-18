@@ -212,14 +212,21 @@ function CollabTaskRow({ task, currentUserId, onEdit, onToggle }) {
             <span className={priorityClass[task.priority]}>{task.priority}</span>
             {task.isCollaborative && (
               <span className="badge bg-primary-500/15 text-primary-400 border border-primary-500/20 flex items-center gap-1">
-                <MdPeople className="text-xs" /> Shared
+                <MdPeople className="text-xs" />
+                Assigned by {task.assignedBy?.userId}
               </span>
             )}
-            {task.assignedBy && task.assignedBy._id !== task.owner?._id && (
-              <span className="text-white/30 text-xs flex items-center gap-1">
-                <MdFlag className="text-xs" /> By {task.assignedBy.userId || task.assignedBy.companyName}
+
+            {task.collaborators?.length > 0 && (
+              <span className="text-white/30 text-xs flex items-center gap-1 flex-wrap">
+                <MdFlag className="text-xs" />
+                Assigned to{' '}
+                {task.collaborators
+                  .map(c => c.userId)
+                  .join(', ')}
               </span>
             )}
+
             {/* Task date */}
             <span className="text-white/25 text-xs flex items-center gap-1">
               <MdCalendarMonth className="text-xs" />
