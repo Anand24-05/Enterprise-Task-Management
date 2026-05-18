@@ -32,8 +32,15 @@ export default function CalendarPage() {
   }, [currentMonth, dispatch])
 
   useEffect(() => {
-    if (selectedDate) dispatch(fetchTasksByDate(selectedDate))
-  }, [selectedDate, dispatch])
+  const today = format(new Date(), 'yyyy-MM-dd')
+
+  if (!selectedDate) {
+    dispatch(setSelectedDate(today))
+    dispatch(fetchTasksByDate(today))
+  } else {
+    dispatch(fetchTasksByDate(selectedDate))
+  }
+}, [selectedDate, dispatch])
 
   const handleDayClick = (day) => {
     const dateStr = format(day, 'yyyy-MM-dd')
@@ -107,7 +114,7 @@ export default function CalendarPage() {
     <div className="grid grid-cols-7 gap-0.5">
       {calDays.map(day => {
         const dayTasks = getTasksForDay(day)
-        const isSelected = selectedDate && isSameDay(day, selectedDateObj)
+        const isSelected = isToday(day)
         const isCurrentMonth = day.getMonth() === currentMonth.getMonth()
         const type = dayType(day)
 
@@ -121,16 +128,13 @@ export default function CalendarPage() {
               relative h-12 rounded-lg flex flex-col items-center justify-start
               p-1 pt-1 transition-all text-sm font-medium
               ${!isCurrentMonth ? 'opacity-25' : ''}
+
               ${
-                isSelected 
+                isSelected
                   ? 'bg-gradient-brand text-white shadow-lg shadow-primary-500/30'
                   : ''
               }
-              ${
-                type === 'today' && !isSelected
-                  ? ' ring-2 ring-primary-500 text-primary-400 '
-                  : ''
-              }
+
               ${
                 !isSelected && isCurrentMonth
                   ? 'hover:bg-white/10 text-white/70'
