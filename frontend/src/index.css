@@ -1,0 +1,280 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Theme CSS variables ────────────────────────────────────────────────────
+   Set at runtime by applyTheme() in useTheme.js.
+   Every accent colour in the app references these vars, so swapping them
+   instantly repaints the whole UI without any Tailwind recompile.
+   ──────────────────────────────────────────────────────────────────────────── */
+:root {
+  --theme-from:   #667eea;
+  --theme-to:     #764ba2;
+  --theme-bg1:    #0f0f1a;
+  --theme-bg2:    #1a1a2e;
+  --theme-bg3:    #16213e;
+  --theme-accent: #667eea;
+
+  /* Derived tokens that components can use inline */
+  --gradient-brand: linear-gradient(135deg, var(--theme-from) 0%, var(--theme-to) 100%);
+  --accent-subtle:  color-mix(in srgb, var(--theme-from) 15%, transparent);
+  --accent-border:  color-mix(in srgb, var(--theme-from) 35%, transparent);
+  --accent-glow:    color-mix(in srgb, var(--theme-from) 25%, transparent);
+}
+
+/* ─── Base ───────────────────────────────────────────────────────────────────*/
+@layer base {
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    /* Background uses vars — updated by applyTheme() on <body> directly too */
+    background: linear-gradient(135deg, var(--theme-bg1) 0%, var(--theme-bg2) 50%, var(--theme-bg3) 100%);
+    color: #e2e8f0;
+    min-height: 100vh;
+  }
+
+  ::-webkit-scrollbar       { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--theme-bg2); }
+  ::-webkit-scrollbar-thumb { background: var(--theme-from); border-radius: 3px; }
+}
+
+/* ─── Component classes (all themed colors via vars) ─────────────────────────*/
+@layer components {
+
+  /* Glass card — neutral, no accent */
+  .glass-card {
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 1rem;
+  }
+
+  /* ── Primary button — gradient from CSS vars ── */
+  .btn-primary {
+    background: var(--gradient-brand);
+    color: #fff;
+    font-weight: 600;
+    padding: 0.625rem 1.5rem;
+    border-radius: 0.75rem;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s, box-shadow 0.2s;
+    box-shadow: 0 4px 20px var(--accent-glow);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    text-decoration: none;
+  }
+  .btn-primary:hover  { opacity: 0.9; box-shadow: 0 6px 24px var(--accent-glow); }
+  .btn-primary:active { transform: scale(0.96); }
+  .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  /* ── Ghost button — neutral ── */
+  .btn-ghost {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.10);
+    color: rgba(255,255,255,0.80);
+    font-weight: 500;
+    padding: 0.625rem 1.5rem;
+    border-radius: 0.75rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    text-decoration: none;
+  }
+  .btn-ghost:hover { background: rgba(255,255,255,0.10); }
+
+  /* ── Input field — focus uses accent var ── */
+  .input-field {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    color: #fff;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    font-family: inherit;
+    font-size: 0.875rem;
+  }
+  .input-field::placeholder { color: rgba(255,255,255,0.35); }
+  .input-field:focus {
+    border-color: var(--theme-from);
+    box-shadow: 0 0 0 2px var(--accent-border);
+  }
+  .input-field:disabled { opacity: 0.5; cursor: not-allowed; }
+  .input-field option { background: #1a1a2e; color: #fff; }
+
+  /* ── Sidebar links ── */
+  .sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.75rem;
+    color: rgba(255,255,255,0.55);
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.18s, color 0.18s;
+    text-decoration: none;
+    border: 1px solid transparent;
+  }
+  .sidebar-link:hover { color: #fff; background: rgba(255,255,255,0.08); }
+
+  /* Active sidebar link — accent tint from vars */
+  .sidebar-link.active {
+    color: #fff;
+    background: color-mix(in srgb, var(--theme-from) 18%, transparent);
+    border-color: var(--accent-border);
+  }
+
+  /* ── Task card ── */
+  .task-card {
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 1rem;
+    padding: 1rem;
+    transition: border-color 0.2s;
+    cursor: pointer;
+  }
+  .task-card:hover { border-color: var(--accent-border); }
+
+  /* ── Badges ── */
+  .badge {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 9999px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  .badge-high   { background: rgba(239,68,68,0.15);  color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+  .badge-medium { background: rgba(234,179,8,0.15);  color: #fbbf24; border: 1px solid rgba(234,179,8,0.3); }
+  .badge-low    { background: rgba(34,197,94,0.15);  color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+
+  /* ── Spinner that uses accent colour ── */
+  .spinner {
+    width: 1.5rem; height: 1.5rem;
+    border: 3px solid rgba(255,255,255,0.15);
+    border-top-color: var(--theme-from);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Themed gradient utility — replaces bg-gradient-brand everywhere ── */
+  .themed-gradient {
+    background: var(--gradient-brand) !important;
+  }
+
+  /* ── Themed accent text colour ── */
+  .themed-text {
+    color: var(--theme-from) !important;
+  }
+
+  /* ── Themed accent border ── */
+  .themed-border {
+    border-color: var(--theme-from) !important;
+  }
+
+  /* ── Calendar selected day ── */
+  .cal-day-selected {
+    background: var(--gradient-brand);
+    color: #fff;
+    box-shadow: 0 4px 16px var(--accent-glow);
+  }
+
+  /* ── Calendar today ring ── */
+  .cal-day-today {
+    outline: 2px solid var(--theme-from);
+    outline-offset: -2px;
+    color: var(--theme-from);
+  }
+
+  /* ── Notification unread badge ── */
+  .notif-badge {
+    background: var(--gradient-brand);
+  }
+
+  /* ── Progress / donut SVG gradient stop colours ─────────────────────────── */
+  /* The SVG linearGradient stops in DashboardPage can't use CSS vars directly,
+     so we expose them as data-attributes on the SVG element. See dashboard. */
+}
+
+/* ─── Tailwind overrides for primary-500 usages we can't easily swap ─────────
+   Tailwind bakes #667eea for primary-500 at compile time. We override the
+   relevant generated classes here so they pick up the runtime var instead.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+/* focus:border-primary-500 */
+.focus\:border-primary-500:focus { border-color: var(--theme-from) !important; }
+
+/* focus:ring-primary-500 */
+.focus\:ring-primary-500:focus { --tw-ring-color: var(--theme-from) !important; }
+
+/* border-primary-500 */
+.border-primary-500 { border-color: var(--theme-from) !important; }
+
+/* text-primary-500, text-primary-400 */
+.text-primary-500 { color: var(--theme-from) !important; }
+.text-primary-400 { color: color-mix(in srgb, var(--theme-from) 80%, #fff) !important; }
+
+/* bg-primary-500 */
+.bg-primary-500 { background-color: var(--theme-from) !important; }
+
+/* bg-primary-500\/20, bg-primary-500\/10 etc */
+.bg-primary-500\/10 { background-color: color-mix(in srgb, var(--theme-from) 10%, transparent) !important; }
+.bg-primary-500\/15 { background-color: color-mix(in srgb, var(--theme-from) 15%, transparent) !important; }
+.bg-primary-500\/20 { background-color: color-mix(in srgb, var(--theme-from) 20%, transparent) !important; }
+.bg-primary-500\/30 { background-color: color-mix(in srgb, var(--theme-from) 30%, transparent) !important; }
+
+/* hover:bg-primary-500\/20, hover:bg-primary-500\/30 */
+.hover\:bg-primary-500\/20:hover { background-color: color-mix(in srgb, var(--theme-from) 20%, transparent) !important; }
+.hover\:bg-primary-500\/30:hover { background-color: color-mix(in srgb, var(--theme-from) 30%, transparent) !important; }
+
+/* border-primary-500\/20, border-primary-500\/30 */
+.border-primary-500\/20 { border-color: color-mix(in srgb, var(--theme-from) 20%, transparent) !important; }
+.border-primary-500\/30 { border-color: color-mix(in srgb, var(--theme-from) 30%, transparent) !important; }
+.border-primary-500\/40 { border-color: color-mix(in srgb, var(--theme-from) 40%, transparent) !important; }
+
+/* hover:border-primary-500\/30, hover:border-primary-500\/40 */
+.hover\:border-primary-500\/30:hover { border-color: color-mix(in srgb, var(--theme-from) 30%, transparent) !important; }
+.hover\:border-primary-500\/40:hover { border-color: color-mix(in srgb, var(--theme-from) 40%, transparent) !important; }
+
+/* hover:text-primary-400, hover:text-primary-500 */
+.hover\:text-primary-400:hover { color: color-mix(in srgb, var(--theme-from) 80%, #fff) !important; }
+.hover\:text-primary-500:hover { color: var(--theme-from) !important; }
+
+/* bg-gradient-brand (used in JSX class strings like className="bg-gradient-brand") */
+.bg-gradient-brand {
+  background: var(--gradient-brand) !important;
+}
+
+/* from-primary-500 / to-secondary-500 used in .btn-primary via @apply — 
+   those are handled by the plain-CSS .btn-primary rule above, but the
+   Tailwind-compiled version of .sidebar-link.active also uses them. */
+.from-primary-500  { --tw-gradient-from: var(--theme-from) !important; }
+.to-secondary-500  { --tw-gradient-to:   var(--theme-to)   !important; }
+.from-primary-500\/20 { --tw-gradient-from: color-mix(in srgb, var(--theme-from) 20%, transparent) !important; }
+.to-secondary-500\/20 { --tw-gradient-to:   color-mix(in srgb, var(--theme-to)   20%, transparent) !important; }
+
+/* ring-primary-500 (spinner border, calendar today outline) */
+.ring-primary-500 { --tw-ring-color: var(--theme-from) !important; }
+
+/* shadow-primary-500\/25 etc */
+.shadow-primary-500\/25 { --tw-shadow-color: color-mix(in srgb, var(--theme-from) 25%, transparent) !important; }
+.shadow-primary-500\/30 { --tw-shadow-color: color-mix(in srgb, var(--theme-from) 30%, transparent) !important; }
+
+/* ─── Settings nav active state (uses bg-gradient-brand in JSX) ──────────────*/
+/* Already handled by .bg-gradient-brand override above */
+
+/* ─── Notification unread dot ────────────────────────────────────────────────*/
+.bg-gradient-brand { background: var(--gradient-brand) !important; }
