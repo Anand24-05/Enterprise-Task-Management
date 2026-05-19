@@ -32,7 +32,7 @@ app.use('/api/', limiter);
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20,
+  max: 200,
   message: { error: 'Too many auth attempts, please try again later.' }
 });
 
