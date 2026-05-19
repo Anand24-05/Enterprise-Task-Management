@@ -29,7 +29,10 @@ api.interceptors.response.use(
       original._retry = true
       refreshing = true
       try {
-        const { data } = await axios.post('/api/auth/refresh-token', {}, { withCredentials: true })
+        const { data } = await axios.post(
+          'https://enterprise-task-management.onrender.com/api/auth/refresh-token',
+          {},
+          { withCredentials: true })
         localStorage.setItem('accessToken', data.accessToken)
         queue.forEach(p => p.resolve())
         queue = []
