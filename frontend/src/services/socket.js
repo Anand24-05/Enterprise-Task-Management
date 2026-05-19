@@ -4,10 +4,16 @@ let socket = null
 
 export const initSocket = (token) => {
   if (socket?.connected) return socket
-  socket = io('/', {
-    auth: { token },
-    transports: ['websocket']
-  })
+
+  socket = io(
+    'https://enterprise-task-management.onrender.com',
+    {
+      auth: { token },
+      transports: ['websocket'],
+      withCredentials: true
+    }
+  )
+
   return socket
 }
 

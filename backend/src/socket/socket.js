@@ -6,9 +6,13 @@ let io;
 const initSocket = (server) => {
   io = new Server(server, {
     cors: {
-      origin: process.env.CLIENT_URL || 'http://localhost:5173',
-      credentials: true
-    }
+  origin: [
+    'http://localhost:5173',
+    'https://enterprise-task-management.vercel.app'
+  ],
+  methods: ['GET', 'POST'],
+  credentials: true
+}
   });
 
   io.use((socket, next) => {
