@@ -1,51 +1,24 @@
 const { Server } = require('socket.io');
-const { verifyAccessToken } = require('../utils/jwt');
 
 let io;
 
 const initSocket = (server) => {
   io = new Server(server, {
     cors: {
-  origin: [
-    'http://localhost:5173',
-    'https://enterprise-task-management.vercel.app'
-  ],
-  methods: ['GET', 'POST'],
-  credentials: true
-}
-  });
-
-  io.use((socket, next) => {
-    const token = socket.handshake.auth.token;
-    if (!token) return next(new Error('Authentication error'));
-    try {
-      const decoded = verifyAccessToken(token);
-      socket.userId = decoded.id;
-      next();
-    } catch {
-      next(new Error('Authentication error'));
+      origin: [
+        'http://localhost:5173',
+        'https://enterprise-task-management.vercel.app'
+      ],
+      methods: ['GET', 'POST'],
+      credentials: true
     }
   });
 
   io.on('connection', (socket) => {
-    socket.join(socket.userId);
-    console.log(`Socket connected: ${socket.userId}`);
-
-    socket.on('join-company', (companyId) => {
-      socket.join(`company-${companyId}`);
-    });
-
-    socket.on('disconnect', () => {
-      console.log(`Socket disconnected: ${socket.userId}`);
-    });
+    console.log('Socket connected:', socket.id);
   });
-
-  return io;
 };
 
-const getIO = () => {
-  if (!io) throw new Error('Socket.io not initialized');
-  return io;
-};
+const getIO = () => io;
 
 module.exports = { initSocket, getIO };
