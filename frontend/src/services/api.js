@@ -1,51 +1,137 @@
 import axios from 'axios'
 
+// Backend URL
+const BASE_URL = 'https://enterprise-task-management.onrender.com/api'
+
+// Axios instance
 const api = axios.create({
-  baseURL: 'https://enterprise-task-management.onrender.com/api',
-  withCredentials: true
+  baseURL: BASE_URL,
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json'
+  }
 })
+
+// ---------------- REQUEST INTERCEPTOR ----------------
 
 // Attach access token
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('accessToken')
-  if (token) config.headers.Authorization = `Bearer ${token}`
-  return config
-})
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('accessToken')
 
-// Handle 401 → refresh token
-let refreshing = false
-let queue = []
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+
+    return config
+  },
+  (error) => Promise.reject(error)
+)
+
+// ---------------- RESPONSE INTERCEPTOR ----------------
+
+let isRefreshing = false
+let failedQueue = []
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error)
+    } else {
+      prom.resolve(token)
+    }
+  })
+
+  failedQueue = []
+}
 
 api.interceptors.response.use(
-  (res) => res,
+  (response) => response,
+
   async (error) => {
-    const original = error.config
-    if (error.response?.status === 401 && !original._retry) {
-      if (refreshing) {
+    const originalRequest = error.config
+
+    // Network/server down
+    if (!error.response) {
+      return Promise.reject(error)
+    }
+
+    const status = error.response.status
+
+    // Prevent refresh loop
+    const isAuthRoute =
+      originalRequest?.url?.includes('/auth/login') ||
+      originalRequest?.url?.includes('/auth/signup') ||
+      originalRequest?.url?.includes('/auth/refresh-token') ||
+      originalRequest?.url?.includes('/auth/logout')
+
+    if (
+      status === 401 &&
+      !originalRequest._retry &&
+      !isAuthRoute
+    ) {
+      // If already refreshing → queue requests
+      if (isRefreshing) {
         return new Promise((resolve, reject) => {
-          queue.push({ resolve, reject })
-        }).then(() => api(original))
+          failedQueue.push({ resolve, reject })
+        })
+          .then((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`
+            return api(originalRequest)
+          })
+          .catch((err) => Promise.reject(err))
       }
-      original._retry = true
-      refreshing = true
+
+      originalRequest._retry = true
+      isRefreshing = true
+
       try {
+        // Refresh token request
         const { data } = await axios.post(
-          'https://enterprise-task-management.onrender.com/api/auth/refresh-token',
+          `${BASE_URL}/auth/refresh-token`,
           {},
-          { withCredentials: true })
-        localStorage.setItem('accessToken', data.accessToken)
-        queue.forEach(p => p.resolve())
-        queue = []
-        return api(original)
-      } catch {
-        queue.forEach(p => p.reject())
-        queue = []
+          {
+            withCredentials: true
+          }
+        )
+
+        const newAccessToken = data.accessToken
+
+        // Save new token
+        localStorage.setItem(
+          'accessToken',
+          newAccessToken
+        )
+
+        // Update axios defaults
+        api.defaults.headers.common.Authorization =
+          `Bearer ${newAccessToken}`
+
+        // Retry queued requests
+        processQueue(null, newAccessToken)
+
+        // Retry original request
+        originalRequest.headers.Authorization =
+          `Bearer ${newAccessToken}`
+
+        return api(originalRequest)
+      } catch (refreshError) {
+        processQueue(refreshError)
+
+        // Clear session
         localStorage.removeItem('accessToken')
-        window.location.href = '/login'
+
+        // Notify React app
+        window.dispatchEvent(
+          new CustomEvent('auth:expired')
+        )
+
+        return Promise.reject(refreshError)
       } finally {
-        refreshing = false
+        isRefreshing = false
       }
     }
+
     return Promise.reject(error)
   }
 )

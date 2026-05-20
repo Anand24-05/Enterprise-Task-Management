@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { fetchMe } from './redux/slices/authSlice'
 import { fetchNotifications, addNotification } from './redux/slices/notificationSlice'
 import { initSocket, disconnectSocket } from './services/socket'
+import { applyTheme, getStoredTheme } from './hooks/useTheme'
 import MainLayout from './components/layout/MainLayout'
 import LoginPage from './pages/Login/LoginPage'
 import SignupPage from './pages/Signup/SignupPage'
@@ -15,10 +16,13 @@ import ProfilePage from './pages/Profile/ProfilePage'
 import SettingsPage from './pages/Settings/SettingsPage'
 import NotFoundPage from './pages/NotFound/NotFoundPage'
 
+// Apply saved theme on startup (must be after all imports)
+applyTheme(getStoredTheme())
+
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, initialized } = useSelector(s => s.auth)
   if (!initialized) return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0f0f1a] via-[#1a1a2e] to-[#16213e]">
       <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
     </div>
   )
@@ -27,7 +31,11 @@ const ProtectedRoute = ({ children }) => {
 
 const PublicRoute = ({ children }) => {
   const { isAuthenticated, initialized } = useSelector(s => s.auth)
-  if (!initialized) return null
+  if (!initialized) return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0f0f1a] via-[#1a1a2e] to-[#16213e]">
+      <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
   return isAuthenticated ? <Navigate to="/calendar" replace /> : children
 }
 
@@ -37,6 +45,14 @@ export default function App() {
 
   useEffect(() => {
     dispatch(fetchMe())
+
+    // Listen for token expiry fired by api.js interceptor.
+    // Using a custom event avoids window.location hard reloads which cause the refresh loop.
+    const handleExpired = () => {
+      dispatch({ type: 'auth/logout/fulfilled' }) // clear Redux auth state
+    }
+    window.addEventListener('auth:expired', handleExpired)
+    return () => window.removeEventListener('auth:expired', handleExpired)
   }, [dispatch])
 
   useEffect(() => {
@@ -50,21 +66,20 @@ export default function App() {
     } else {
       disconnectSocket()
     }
-    return () => {}
   }, [isAuthenticated, dispatch])
 
   return (
     <Routes>
-      <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-      <Route path="/signup" element={<PublicRoute><SignupPage /></PublicRoute>} />
+      <Route path="/login"        element={<PublicRoute><LoginPage /></PublicRoute>} />
+      <Route path="/signup"       element={<PublicRoute><SignupPage /></PublicRoute>} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
         <Route index element={<Navigate to="/calendar" replace />} />
-        <Route path="calendar" element={<CalendarPage />} />
-        <Route path="dashboard" element={<DashboardPage />} />
+        <Route path="calendar"      element={<CalendarPage />} />
+        <Route path="dashboard"     element={<DashboardPage />} />
         <Route path="collaboration" element={<CollaborationPage />} />
-        <Route path="profile" element={<ProfilePage />} />
-        <Route path="settings" element={<SettingsPage />} />
+        <Route path="profile"       element={<ProfilePage />} />
+        <Route path="settings"      element={<SettingsPage />} />
       </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

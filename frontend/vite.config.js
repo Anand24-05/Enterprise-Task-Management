@@ -15,5 +15,13 @@ export default defineConfig({
         ws: true,
       }
     }
+  },
+  // Ensure SPA routing works — all unknown paths serve index.html
+  preview: {
+    port: 4173,
+  },
+  build: {
+    outDir: 'dist',
+    sourcemap: false,
   }
 })
