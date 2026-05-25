@@ -6,7 +6,7 @@ const app = require('./src/app');
 const { initSocket } = require('./src/socket/socket');
 const authRoutes = require('./src/routes/authRoutes');
 
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 5000;
 
 // Routes
 app.use('/api/auth', authRoutes);

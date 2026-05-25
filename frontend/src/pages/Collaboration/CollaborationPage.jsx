@@ -246,13 +246,45 @@ function CollabTaskRow({ task, currentUserId, onEdit, onToggle, onDelete }) {
               </span>
             )}
 
-            {/* Assigned by */}
-            {isAssigned && (
-              <span className="text-white/30 text-xs flex items-center gap-1">
-                <MdFlag className="text-xs" />
-                Assigned by {task.assignedBy?.userId || task.assignedBy?.companyName || 'company'}
-              </span>
-            )}
+           {/* Assignment info */}
+{(task.assignedBy || task.owner || task.collaborators?.length > 0) && (
+  <div className="flex flex-col gap-1 mt-1">
+
+    {/* Assigned By */}
+    {task.assignedBy && (
+      <span className="text-white/35 text-xs flex items-center gap-1">
+        <MdFlag className="text-xs" />
+        Assigned by
+        <span className="text-white/60 font-medium">
+          {task.assignedBy?.userId ||
+           task.assignedBy?.companyName ||
+           'company'}
+        </span>
+      </span>
+    )}
+
+    {/* Assigned To */}
+    <span className="text-white/35 text-xs flex items-center gap-1 flex-wrap">
+      <MdPerson className="text-xs" />
+      Assigned to
+
+      {/* Collaborators */}
+      {task.collaborators?.length > 0 &&
+        task.collaborators.map((c, i) => (
+          <span
+            key={c._id || i}
+            className="text-primary-400 font-medium"
+          >
+            {i === 0 && task.owner?.userId ? '' : ''}
+            {c.userId}
+            {i < task.collaborators.length - 1 ? ',' : ''}
+          </span>
+        ))
+      }
+    </span>
+
+  </div>
+)}
 
             {/* Task date */}
             <span className="text-white/25 text-xs flex items-center gap-1">
@@ -648,18 +680,39 @@ setMembers(membersRes.data.members || [])
 
   // Merge personal tasks into each member's collaboration group
   // Personal tasks = tasks owned by that member OR tasks where that member is a collaborator
-  const enrichedGroups = members.map(member => {
+  // Show shared tasks in every involved user's tile
+const enrichedGroups = members.map(member => {
   const memberId = member._id?.toString()
 
-  const group = collaboration.find(
-    g => g.user._id?.toString() === memberId
+  // collect tasks where:
+  // 1. member is owner
+  // 2. member is collaborator
+  const tasks = collaboration.flatMap(group =>
+    (group.tasks || []).filter(task => {
+      const ownerId =
+        task.owner?._id?.toString() ||
+        task.owner?.toString()
+
+      const collaboratorIds =
+        task.collaborators?.map(c =>
+          (c._id || c).toString()
+        ) || []
+
+      return (
+        ownerId === memberId ||
+        collaboratorIds.includes(memberId)
+      )
+    })
   )
 
-  const tasks = group?.tasks || []
+  // remove duplicates
+  const uniqueTasks = Array.from(
+    new Map(tasks.map(t => [t._id, t])).values()
+  )
 
   return {
     user: member,
-    tasks
+    tasks: uniqueTasks
   }
 })
 
