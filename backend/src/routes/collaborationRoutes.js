@@ -12,6 +12,11 @@ router.put('/task/:id', collaborationController.updateCollaborativeTask);
 router.delete(
   '/task/:id',
   collaborationController.deleteCollaborationTask
+);
+router.get(
+  '/all-tasks',
+  protect,
+  collaborationController.getCompanyTasks
 )
 
 module.exports = router;

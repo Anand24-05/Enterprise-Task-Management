@@ -198,3 +198,58 @@ exports.deleteCollaborationTask = async (req, res) => {
     })
   }
 }
+
+exports.getCompanyTasks = async (req, res) => {
+  try {
+    const { year, month } = req.query
+
+    const start = new Date(year, month - 1, 1)
+    const end = new Date(year, month, 1)
+
+    const companyId =
+      req.user.companyId ||
+      req.user._id
+
+    if (!companyId) {
+      return res.status(400).json({
+        error: 'No company found'
+      })
+    }
+
+    // all company members
+    const members = await User.find({
+      companyId
+    }).select('_id userId email')
+
+    const memberIds = members.map(m => m._id)
+
+    // ALL tasks of company users
+    const tasks = await Task.find({
+      owner: { $in: memberIds },
+      taskDate: {
+        $gte: start,
+        $lt: end
+      }
+    })
+      .populate('owner', 'userId email')
+      .populate('assignedBy', 'userId')
+      .populate('collaborators', 'userId')
+
+    // group by user
+    const grouped = members.map(member => ({
+      user: member,
+      tasks: tasks.filter(
+        t => t.owner?._id?.toString() === member._id.toString()
+      )
+    }))
+
+    res.json({
+      collaboration: grouped
+    })
+  } catch (err) {
+    console.log(err)
+    res.status(500).json({
+      error: 'Failed to fetch company tasks'
+    })
+  }
+}
